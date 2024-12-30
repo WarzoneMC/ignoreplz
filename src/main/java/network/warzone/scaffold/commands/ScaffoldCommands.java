@@ -250,8 +250,7 @@ public class ScaffoldCommands implements CommandExecutor {
         }
 
         if (wrapper.isOpen()) {
-            sender.sendMessage(ChatColor.RED + "Failed to export: world must be closed!");
-            return true;
+            wrapper.getWorld().get().save();
         }
 
         FtpManager ftpManager = new FtpManager();
@@ -268,8 +267,13 @@ public class ScaffoldCommands implements CommandExecutor {
             String randy = UUID.randomUUID().toString().substring(0, 3);
             File zip = new File(wrapper.getName() + "-" + randy + ".zip");
 
+            File originalFolder = wrapper.getFolder();
+            File tempCopy = new File("temp-" + wrapper.getName() + "-" + randy);
+
             try {
-                Zip.create(wrapper.getFolder(), zip, prune);
+                FileUtils.copyDirectory(originalFolder, tempCopy, file -> !file.getName().equals("session.lock"));
+
+                Zip.create(tempCopy, zip, prune);
 
                 sender.sendMessage(ChatColor.YELLOW + "Uploading world, this may take a while depending on the map size...");
                 HttpResponse<String> response = Unirest.post("https://file.io")
@@ -295,6 +299,13 @@ public class ScaffoldCommands implements CommandExecutor {
             } catch (Exception e) {
                 e.printStackTrace();
                 sender.sendMessage(ChatColor.RED + "Failed to compress or upload the specified world.");
+            } finally {
+                try {
+                    FileUtils.deleteDirectory(tempCopy);
+                } catch (IOException e) {
+                    System.err.println("Failed to delete temporary copy: " + tempCopy.getAbsolutePath());
+                    e.printStackTrace();
+                }
             }
         });
         return true;
