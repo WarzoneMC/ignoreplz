@@ -218,6 +218,8 @@ public class ScaffoldCommands implements CommandExecutor {
             }
         }
 
+        wrapper.getWorld().get().save();
+
         boolean unloaded = wrapper.unload();
         sender.sendMessage(ChatColor.GOLD + (unloaded ? "Closed world \"" + wrapper.getName() + "\"." : "Failed to unload world \"" + wrapper.getName() + "\"."));
         return true;
@@ -244,6 +246,11 @@ public class ScaffoldCommands implements CommandExecutor {
 
         if (!wrapper.isCreated()) {
             sender.sendMessage(ChatColor.RED + "World not found.");
+            return true;
+        }
+
+        if (wrapper.isOpen()) {
+            sender.sendMessage(ChatColor.RED + "Failed to export: world must be closed!");
             return true;
         }
 
